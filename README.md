@@ -4,9 +4,15 @@
 
 # Test-Shop API
 
-1. Hacer una copia del archivo ```.env.template``` y renombrar a  ```.env```
+1. Clonar el proyecto
 
-2.  Levantar la base de datos creando el contenedor
+2. Instalar las dependencias
+```
+npm i
+```
+3. Hacer una copia del archivo ```.env.template``` y renombrar a  ```.env```
+
+4.  Levantar la base de datos creando el contenedor
 ````
 docker-compose up -d
 ````
