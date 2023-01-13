@@ -11,13 +11,14 @@ export class Product {
     })
     title: string;
 
-    @Column('numeric', {
+    @Column('float', {
         default: 0
     })
     price: number;
 
     @Column({
-        type: 'text'
+        type: 'text',
+        nullable: true
     })
     description: string;
 
@@ -26,7 +27,7 @@ export class Product {
     })
     slug: string;
 
-    @Column('numeric', {
+    @Column('int', {
         default: 0
     })
     stock: number;
@@ -37,7 +38,7 @@ export class Product {
     sizes: string[];
 
     @Column('text')
-    genter: string;
+    gender: string;
 }
 
 /// Decoramos nuestra clase entidad con Entity() - Para que pueda funcionar la importacion

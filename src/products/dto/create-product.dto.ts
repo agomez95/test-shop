@@ -16,8 +16,7 @@ export class CreateProductDto {
     description?: string;
 
     @IsString()
-    @IsOptional()
-    slug?: string;
+    slug: string;
 
     @IsInt()
     @IsPositive()
@@ -29,5 +28,5 @@ export class CreateProductDto {
     sizes: string[];
 
     @IsIn(['men','women','kid','unisex'])
-    genter: string;
+    gender: string;
 }
