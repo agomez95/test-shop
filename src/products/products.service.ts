@@ -48,7 +48,14 @@ export class ProductsService {
     if(isUUID(term)) {
       product = await this.productRepository.findOneBy({ id: term });
     } else {
-      product = await this.productRepository.findOneBy({ slug: term });
+      // product = await this.productRepository.findOneBy({ slug: term }); solo slug
+      const queryBuilder = this.productRepository.createQueryBuilder();
+      product = await queryBuilder
+        .where('UPPER(title) =:title or slug =:slug', {
+          title: term.toUpperCase(), // el title con UPPER y to.. arregla la capitulacion del nombre Polo Bi.... algo asi
+          slug: term.toLowerCase(), // el slug siempr en minusculas
+        })
+        .getOne();
     }
 
     if(!product) throw new NotFoundException(`Produc with id or slug "${term}" not found`)
