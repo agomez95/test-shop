@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class Product {
@@ -39,7 +39,22 @@ export class Product {
 
     @Column('text')
     gender: string;
+
+    /**
+     * @checkSlugInsert - funcion que hace que previo al insert en la bd cree el slug si
+     * es que no es enviado
+     */
+    @BeforeInsert()
+    checkSlugInsert() {
+        if(!this.slug) this.slug = this.title;
+
+        this.slug = this.slug.toLowerCase()
+            .replaceAll(' ','_')
+            .replaceAll("'",'');    
+    }
 }
 
 /// Decoramos nuestra clase entidad con Entity() - Para que pueda funcionar la importacion
 /// definimos nuestras columnas de nuestra tabla
+
+
