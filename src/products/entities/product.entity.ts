@@ -1,4 +1,5 @@
-import { BeforeInsert, BeforeUpdate, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { ProductImage } from "./product-images.entity";
 
 @Entity()
 export class Product {
@@ -40,6 +41,14 @@ export class Product {
     @Column('text')
     gender: string;
 
+    @OneToMany(
+        () => ProductImage,
+        (productImage) => productImage.product,
+        { cascade: true }
+    )
+    images?: ProductImage[];
+
+    
     /**
      * @checkSlugInsert - funcion que hace que previo al insert en la bd cree el slug si
      * es que no es enviado
