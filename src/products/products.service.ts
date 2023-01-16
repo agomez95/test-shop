@@ -28,7 +28,7 @@ export class ProductsService {
     try {
       const product = this.productRepository.create(createProductDto); 
       await this.productRepository.save(product);
-      return product;
+      return `Added new product: "${product.slug}"`;
     } catch(error) {
       this.handleDBException(error);
     }
@@ -63,14 +63,29 @@ export class ProductsService {
     return product;
   }
 
-  update(id: number, updateProductDto: UpdateProductDto) {
-    return `This action updates a #${id} product`;
+  async update(id: string, updateProductDto: UpdateProductDto) {
+
+    // preload - buscar el producto por id y que cargue las propiedades del dto
+    const product = await this.productRepository.preload({
+      id: id,
+      ...updateProductDto
+    });
+    
+    if(!product) throw new BadRequestException(`Product with id '${id}' not found`);
+
+    try {
+      await this.productRepository.save(product);
+    } catch (error) {
+      this.handleDBException(error);
+    }
+
+    return `Product with id '${id}' was updated`;
   }
 
   async remove(id: string) {
     const { affected } = await this.productRepository.delete({id: id}) //el uso de remove tambien es valido, investigar
 
-    if(affected === 0) throw new BadRequestException(`Product with id '${id}' doesn't exists`);
+    if(affected === 0) throw new BadRequestException(`Product with id '${id}' not found`);
 
     return `Product with id '${id}' was removed`;
   }
@@ -83,3 +98,14 @@ export class ProductsService {
     throw new InternalServerErrorException(`Unexpected error - check server logs`);
   }
 }
+
+/** Metodo update - propio
+ * async update(id: string, updateProductDto: UpdateProductDto) {
+    try {
+      const product = await this.productRepository.update(id, updateProductDto);
+      return `Product with id '${id}' was updated`;
+    } catch(error) {
+      this.handleDBException(error);
+    }
+  }
+ */
