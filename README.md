@@ -16,3 +16,7 @@ npm i
 ````
 docker-compose up -d
 ````
+5. Correr el seed para llenar de productos el api
+```
+localhost:3000/api/seed/
+```
