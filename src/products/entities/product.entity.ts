@@ -44,7 +44,7 @@ export class Product {
     @OneToMany( // leer documentacion de todo esto
         () => ProductImage,
         (productImage) => productImage.product,
-        { cascade: true, eager: true }
+        { cascade: true, eager: true } // con esto acepto eliminacion en cascada y con eager es para hacer los finds de las relaciones
     )
     images?: ProductImage[];
 

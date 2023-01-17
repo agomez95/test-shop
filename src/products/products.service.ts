@@ -144,6 +144,21 @@ export class ProductsService {
 
     return product;
   }
+
+  // bonus
+  async deleteAllProducts(){
+    const query = this.productRepository.createQueryBuilder('prod');
+
+    try {
+      return await query
+        .delete()
+        .where({})
+        .execute();
+    } catch(error) {
+      this.handleDBException(error)
+    }
+    
+  }
 }
 
 /** Metodo update - propio
