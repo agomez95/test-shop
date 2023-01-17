@@ -10,7 +10,7 @@ export class ProductImage {
     @Column('text')
     url: string;
 
-    @ManyToOne(
+    @ManyToOne( // leer documentacion de todo esto
         () => Product,
         (product) => product.images
     )

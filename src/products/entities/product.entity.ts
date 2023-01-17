@@ -41,14 +41,14 @@ export class Product {
     @Column('text')
     gender: string;
 
-    @OneToMany(
+    @OneToMany( // leer documentacion de todo esto
         () => ProductImage,
         (productImage) => productImage.product,
-        { cascade: true }
+        { cascade: true, eager: true }
     )
     images?: ProductImage[];
 
-    
+
     /**
      * @checkSlugInsert - funcion que hace que previo al insert en la bd cree el slug si
      * es que no es enviado

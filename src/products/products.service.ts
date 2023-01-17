@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { isUUID } from 'class-validator';
 
 import { Product, ProductImage } from './entities';
@@ -17,7 +17,8 @@ export class ProductsService {
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
     @InjectRepository(ProductImage)
-    private readonly productImageRepository: Repository<ProductImage>
+    private readonly productImageRepository: Repository<ProductImage>,
+    private readonly dataSource: DataSource
   ) {}
 
   /**
@@ -28,14 +29,14 @@ export class ProductsService {
    */
   async create(createProductDto: CreateProductDto) {
     try {
-      const { images = [], ...productDetails } = createProductDto;
+      const { images = [], ...productDetails } = createProductDto; // separo las imagenes enviadas del dto en un array por defecto de las otras propiedades
 
       const product = this.productRepository.create({
-        ...productDetails,
-        images: images.map( image => this.productImageRepository.create({ url: image }) )
+        ...productDetails, /// despliego las propiedades
+        images: images.map( image => this.productImageRepository.create({ url: image }) ) // mapeo cada imagen para crearlas en un repositorio una por una
       }); 
 
-      await this.productRepository.save(product);
+      await this.productRepository.save(product); //se guarda el producto y las imagenes
       
       /// return `Added new product: "${product.slug}"`;
       return {...product, images}
@@ -44,53 +45,66 @@ export class ProductsService {
     }
   }
 
-  findAll(paginationDto: PaginationDto) {
+  async findAll(paginationDto: PaginationDto) {
     const { limit = 10, offset = 0 } = paginationDto;
-    return this.productRepository.find({
+
+    const products = await this.productRepository.find({
       take: limit,
-      skip: offset
+      skip: offset,
+      relations: {
+        images: true
+      }
     });
+
+    return products.map(product => ({
+      ...product,
+      images: product.images.map(img => img.url)
+    }));
   }
 
-  async findOne(term: string) {
-    let product: Product;
+  async findOnePlain(term: string) {
+    const { images=[], ...details} = await this.findOne(term);    
 
-    if(isUUID(term)) {
-      product = await this.productRepository.findOneBy({ id: term });
-    } else {
-      // product = await this.productRepository.findOneBy({ slug: term }); solo slug
-      const queryBuilder = this.productRepository.createQueryBuilder();
-      product = await queryBuilder
-        .where('UPPER(title) =:title or slug =:slug', {
-          title: term.toUpperCase(), // el title con UPPER y to.. arregla la capitulacion del nombre Polo Bi.... algo asi
-          slug: term.toLowerCase(), // el slug siempr en minusculas
-        })
-        .getOne();
-    }
-
-    if(!product) throw new NotFoundException(`Produc with id or slug "${term}" not found`)
-
-    return product;
+    return {...details, images: images.map(img => img.url)}
   }
 
   async update(id: string, updateProductDto: UpdateProductDto) {
 
-    // preload - buscar el producto por id y que cargue las propiedades del dto
-    const product = await this.productRepository.preload({
-      id: id,
-      ...updateProductDto,
-      images: []
-    });
+    const {images, ...toUpdate} = updateProductDto;
+  
+    // preload - buscar el producto por id y que cargue las propiedades sin las imagenes
+    const product = await this.productRepository.preload({ id, ...toUpdate});
     
     if(!product) throw new BadRequestException(`Product with id '${id}' not found`);
 
-    try {
-      await this.productRepository.save(product);
-    } catch (error) {
-      this.handleDBException(error);
-    }
+    /**
+     * @queryRunner - es como una linea de vida de un query programado, donde "intenta" hacer un update de las imagenes
+     * borrando las primeras y luego creandolas para guardarlas, si falla hace un rollback para volver al principio y manda error
+     */
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction()
 
-    return `Product with id '${id}' was updated`;
+    try {
+
+      if(images) {
+        await queryRunner.manager.delete(ProductImage, { product: { id } });
+        product.images = images.map(image => this.productImageRepository.create({ url: image }));
+      }
+
+      await queryRunner.manager.save(product);
+      await queryRunner.commitTransaction();
+      await queryRunner.release();
+
+      return this.findOnePlain(id);
+
+    } catch (error) {
+
+      await queryRunner.rollbackTransaction();
+      await queryRunner.release();
+      this.handleDBException(error);
+
+    }
   }
 
   async remove(id: string) {
@@ -107,6 +121,28 @@ export class ProductsService {
     this.logger.error(error) //si no es un error controlado lo imprimira en consola
     
     throw new InternalServerErrorException(`Unexpected error - check server logs`);
+  }
+
+  private async findOne(term: string) {
+    let product: Product;
+
+    if(isUUID(term)) {
+      product = await this.productRepository.findOneBy({ id: term });
+    } else {
+      // product = await this.productRepository.findOneBy({ slug: term }); solo slug
+      const queryBuilder = this.productRepository.createQueryBuilder('prod');
+      product = await queryBuilder
+        .where('UPPER(title) =:title or slug =:slug', {
+          title: term.toUpperCase(), // el title con UPPER y to.. arregla la capitulacion del nombre Polo Bi.... algo asi
+          slug: term.toLowerCase(), // el slug siempr en minusculas
+        })
+        .leftJoinAndSelect('prod.images','prodImages')
+        .getOne();
+    }
+
+    if(!product) throw new NotFoundException(`Produc with id or slug "${term}" not found`)
+
+    return product;
   }
 }
 
