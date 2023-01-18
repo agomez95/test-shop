@@ -9,6 +9,9 @@
 # db
 /postgres
 
+# uploads
+/static
+
 # Logs
 logs
 *.log
