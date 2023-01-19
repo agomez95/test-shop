@@ -20,4 +20,4 @@ docker-compose up -d
 ```
 http://localhost:3000/api/seed/
 ```
-6. Crear el folder "static" y en su interior otro folder de "products"
+6. Crear el folder "static" y en su interior otro folder de "products" y copiar el zip de imagenes
