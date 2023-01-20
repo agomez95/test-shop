@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { AuthModule } from 'src/auth/auth.module';
 import { CommonModule } from 'src/common/common.module';
+
 import { ProductsService } from './products.service';
 import { ProductsController } from './products.controller';
+
 import { Product, ProductImage } from './entities';
 
 @Module({
@@ -11,7 +14,8 @@ import { Product, ProductImage } from './entities';
   providers: [ProductsService],
   imports: [
     TypeOrmModule.forFeature([Product, ProductImage]),
-    CommonModule
+    CommonModule,
+    AuthModule
   ],
   exports: [
     ProductsService,

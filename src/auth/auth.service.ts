@@ -1,11 +1,13 @@
 import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { JwtService } from '@nestjs/jwt';
 
+import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
 import { CreateUserDto, LoginUserDto } from './dto/';
 import { User } from './entities/user.entity';
+import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
@@ -14,7 +16,8 @@ export class AuthService {
 
   constructor(
     @InjectRepository(User)
-    private readonly userRepostory: Repository<User>
+    private readonly userRepostory: Repository<User>,
+    private readonly jwtService: JwtService
   ) {}
 
   async create(createUserDto: CreateUserDto) {
@@ -25,7 +28,11 @@ export class AuthService {
         password: bcrypt.hashSync(password,10)
       });
       await this.userRepostory.save(user);
-      return user;
+      delete user.password;
+      return {
+        ...user,
+        token: this.getJwtToken({ id: user.id })
+      };
     } catch(error) {
       this.handleDBException(error)
     }
@@ -37,14 +44,21 @@ export class AuthService {
 
     const user = await this.userRepostory.findOne({
       where: { email },
-      select: { email: true, password: true}
+      select: { id: true, email: true, password: true }
     });
 
     if(!user) throw new BadRequestException(`Credentials are not valid (email)`);
 
     if(!bcrypt.compareSync(password,user.password)) throw new BadRequestException(`Credentials are not valid (password)`);
 
-    return user;
+    return {
+      token: this.getJwtToken({ id: user.id }) // la interfaz payload recibe siempre un objecto con el email
+    };
+  }
+
+  private getJwtToken(payload: JwtPayload) {
+    const token = this.jwtService.sign(payload);
+    return token;
   }
 
   private handleDBException(error: any): never {

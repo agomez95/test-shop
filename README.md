@@ -6,11 +6,12 @@
 
 1. Clonar el proyecto
 
-2. Instalar las dependencias
+2. Hacer una copia del archivo ```.env.template``` y renombrar a  ```.env```
+
+3. Instalar las dependencias
 ```
 npm i
 ```
-3. Hacer una copia del archivo ```.env.template``` y renombrar a  ```.env```
 
 4.  Levantar la base de datos creando el contenedor
 ````
