@@ -1,4 +1,5 @@
-import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { User } from "src/auth/entities/user.entity";
+import { BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { ProductImage } from "./product-images.entity";
 
 @Entity({name: 'products'})
@@ -48,6 +49,12 @@ export class Product {
     )
     images?: ProductImage[];
 
+    @ManyToOne(
+        () => User,
+        (user) => user.product,
+        { eager: true }
+    )
+    user: User;
 
     /**
      * @checkSlugInsert - funcion que hace que previo al insert en la bd cree el slug si

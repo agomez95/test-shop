@@ -4,6 +4,7 @@ import { DataSource, Repository } from 'typeorm';
 import { isUUID } from 'class-validator';
 
 import { Product, ProductImage } from './entities';
+import { User } from 'src/auth/entities/user.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
@@ -27,13 +28,14 @@ export class ProductsService {
    * @returns product - una instancia del producto creado con un @create 
    *          que a su ves, con un @save lo guarda en la BD
    */
-  async create(createProductDto: CreateProductDto) {
+  async create(createProductDto: CreateProductDto, user: User) {
     try {
       const { images = [], ...productDetails } = createProductDto; // separo las imagenes enviadas del dto en un array por defecto de las otras propiedades
 
       const product = this.productRepository.create({
         ...productDetails, /// despliego las propiedades
-        images: images.map( image => this.productImageRepository.create({ url: image }) ) // mapeo cada imagen para crearlas en un repositorio una por una
+        images: images.map( image => this.productImageRepository.create({ url: image }) ), // mapeo cada imagen para crearlas en un repositorio una por una
+        user // antes de guardar se envia el usuario
       }); 
 
       await this.productRepository.save(product); //se guarda el producto y las imagenes
@@ -62,13 +64,17 @@ export class ProductsService {
     }));
   }
 
+  /**
+   * @param term - Termino de busqueda para el producto que puede ser nombre o id
+   * @returns el producto pero iterando cada imagen respectiva del producto
+   */
   async findOnePlain(term: string) {
     const { images=[], ...details} = await this.findOne(term);    
 
     return {...details, images: images.map(img => img.url)}
   }
 
-  async update(id: string, updateProductDto: UpdateProductDto) {
+  async update(id: string, updateProductDto: UpdateProductDto, user) {
 
     const {images, ...toUpdate} = updateProductDto;
   
@@ -92,6 +98,7 @@ export class ProductsService {
         product.images = images.map(image => this.productImageRepository.create({ url: image }));
       }
 
+      product.user = user; // antes de guardar se envia el usuario
       await queryRunner.manager.save(product);
       await queryRunner.commitTransaction();
       await queryRunner.release();
