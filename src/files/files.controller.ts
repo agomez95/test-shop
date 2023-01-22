@@ -1,6 +1,7 @@
 import { Controller, Post, Get, Res, Param, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags } from '@nestjs/swagger';
 
 import { Response } from 'express';
 import { diskStorage } from 'multer';
@@ -8,6 +9,8 @@ import { diskStorage } from 'multer';
 import { FilesService } from './files.service';
 import { fileFilter, fileNamer } from './helpers/';
 
+
+@ApiTags('Files') // Si queremos que swagger agrupe los endpoints debemos agregar ApiTags en todos los controller antes de @Controller()
 @Controller('files')
 export class FilesController {
   constructor(private readonly filesService: FilesService, private readonly configService: ConfigService) {}

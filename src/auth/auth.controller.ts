@@ -1,14 +1,14 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, SetMetadata } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { ApiTags } from '@nestjs/swagger';
 
 import { AuthService } from './auth.service';
 import { Auth, GetUser } from './decorators/';
 
 import { CreateUserDto, LoginUserDto } from './dto/';
 import { User } from './entities/user.entity';
-import { RoleProtected } from './decorators/role-protected.decorator';
 import { ValidRoles } from './interfaces';
 
+@ApiTags('Auth') // Si queremos que swagger agrupe los endpoints debemos agregar ApiTags en todos los controller antes de @Controller()
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}

@@ -1,19 +1,28 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query } from '@nestjs/common';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
+
 import { Auth, GetUser } from '../auth/decorators';
-import { User } from '../auth/entities/user.entity';
+import { ValidRoles } from '../auth/interfaces';
+
 import { ProductsService } from './products.service';
+import { Product } from './entities';
+import { User } from '../auth/entities/user.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { PaginationDto } from '../common/dtos/pagination.dto';
-import { ValidRoles } from '../auth/interfaces';
 
+@ApiTags('Products') // Si queremos que swagger agrupe los endpoints debemos agregar ApiTags en todos los controller antes de @Controller()
 @Controller('products')
 //@Auth() //con esto verifico que este logeado y tenga el token para ser usado las rutas de productos
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Post()
-  @Auth(ValidRoles.user)
+  @Auth()
+  ///  Esto es para que el swagger indique que puede responder el endpoint
+  @ApiResponse({status: 201, description: 'Product was created', type: Product})
+  @ApiResponse({status: 400, description: 'Bad Request'})
+  @ApiResponse({status: 403, description: 'Forbidden, Token related'})
   create(@Body() createProductDto: CreateProductDto, @GetUser() user: User) { // envio del usuario por medio del decorador
     return this.productsService.create(createProductDto, user);
   }
