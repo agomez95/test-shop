@@ -33,6 +33,13 @@ export class AuthController {
     return user;
   }
 
+  /// se supone que esto hace un relogin en teoria, digamos que valida la sesion existente para evitar que el token este vacio y generar un nuevo con data
+  @Get('check-status')
+  @Auth()
+  checkAuthStatus(@GetUser() user: User) {
+    return this.authService.checkAuthStatus(user);
+  }
+
   /*  Pruebas de Custom Guards y Decorators
   @Get('private')
   @UseGuards(AuthGuard())
